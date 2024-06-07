@@ -44,11 +44,13 @@ architecture Behavioral of control_logic is
     signal enable_reg : STD_LOGIC;
     signal rst_reg : STD_LOGIC;
     signal clr_reg : STD_LOGIC;
+    
+    signal counter : INTEGER := 0;
 
     type states is (LOGIC,DELAY);
     signal current_state, next_state : states;
     
-    constant CNT : INTEGER := 100;
+    constant CNT : INTEGER := 4;
     
 begin
 
@@ -62,25 +64,30 @@ begin
     end if;   
 end process;
 
-process(current_state, cmp)
+process(current_state, cmp, clk)
 begin
     next_state <= current_state;
     case current_state is
-    
         when LOGIC =>
             if cmp = '1' then
                 enable_reg <= '1';
                 clr_reg <= '0';
                 rst_reg <= '0';
-            elsif falling_edge(cmp) then
+            else -- if falling_edge(cmp) then
                 next_state <= DELAY;
+                counter <= 0;
             end if;
 
         when DELAY =>
             enable_reg <= '0';
             clr_reg <= '1';
             rst_reg <= '1';
-            next_state <= LOGIC;
+            if counter >= CNT then
+                next_state <= LOGIC;
+            else
+                counter <= counter +1;
+                next_state <= DELAY;
+            end if;
     end case;
 
 end process;
