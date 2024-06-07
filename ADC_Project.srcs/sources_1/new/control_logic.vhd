@@ -33,9 +33,9 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity control_logic is
     Port ( cmp : in STD_LOGIC;
-           rst : out STD_LOGIC;
-           clr : out STD_LOGIC;
-           enable : out STD_LOGIC;
+           rst : out STD_LOGIC:='1';
+           clr : out STD_LOGIC:='1';
+           enable : out STD_LOGIC:='0';
            clk : in STD_LOGIC);
 end control_logic;
 
@@ -44,8 +44,7 @@ architecture Behavioral of control_logic is
     signal enable_reg : STD_LOGIC;
     signal rst_reg : STD_LOGIC;
     signal clr_reg : STD_LOGIC;
-    signal counter : INTEGER := 0;
-    
+
     type states is (LOGIC,DELAY);
     signal current_state, next_state : states;
     
@@ -57,31 +56,30 @@ process(clk,cmp)
 begin
     if rising_edge(clk) then
         current_state <= next_state;
+        enable <= enable_reg;
+        clr <= clr_reg;
+        rst <= rst_reg;
     end if;   
 end process;
 
-process(current_state, cmp, counter)
+process(current_state, cmp)
 begin
     next_state <= current_state;
---    enable <= enable_reg;
---    rst <= rst_reg;
---    clr <= clr_reg; 
     case current_state is
     
         when LOGIC =>
-            if falling_edge(cmp) then
-                counter <= 0;
-                enable <= '0';
-                clr <= '1';
-                rst <= '1';
+            if cmp = '1' then
+                enable_reg <= '1';
+                clr_reg <= '0';
+                rst_reg <= '0';
+            elsif falling_edge(cmp) then
                 next_state <= DELAY;
-            elsif cmp = '1' then
-                enable <= '1';
-                clr <= '0';
-                rst <= '0';
             end if;
-            
+
         when DELAY =>
+            enable_reg <= '0';
+            clr_reg <= '1';
+            rst_reg <= '1';
             next_state <= LOGIC;
     end case;
 
